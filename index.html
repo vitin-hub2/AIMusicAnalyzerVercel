@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<meta name="theme-color" content="#0a0800"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="MusicAI"/>
+<link rel="apple-touch-icon" href="icons/icon-192.png"/>
+<link rel="manifest" href="manifest.json"/>
+<title>AI Music Analyzer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0800;
+  --bg2:#110f00;
+  --surface:#16130a;
+  --surface2:#1e1a0d;
+  --surface3:#252015;
+  --border:#2a2410;
+  --border2:#3a3218;
+  --gold:#d4af37;
+  --gold2:#f0d060;
+  --gold3:#a07c1a;
+  --gold-dim:rgba(212,175,55,0.12);
+  --gold-glow:rgba(212,175,55,0.25);
+  --text:#f5edd8;
+  --text2:#c8b87a;
+  --muted:#6b5e35;
+  --red:#e05050;
+  --purple:#9b6fd4;
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;overflow-x:hidden;-webkit-font-smoothing:antialiased;}
+body{padding-top:var(--safe-top);padding-bottom:var(--safe-bottom);}
+input,button,textarea{font-family:inherit;-webkit-appearance:none;appearance:none;}
+button{cursor:pointer;}
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes wave{0%,100%{height:6px;opacity:.4}50%{height:24px;opacity:1}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes vinyl{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes shimmer{0%{opacity:.5}50%{opacity:1}100%{opacity:.5}}
+@keyframes goldPulse{0%,100%{box-shadow:0 0 0 0 rgba(212,175,55,0)}50%{box-shadow:0 0 20px 4px rgba(212,175,55,0.15)}}
+
+.fade-up{animation:fadeUp .4s ease forwards;}
+
+/* BOTTOM NAV */
+#bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;
+  background:var(--surface);
+  border-top:1px solid var(--border2);
+  display:flex;
+  padding-bottom:var(--safe-bottom);
+  z-index:200;
+}
+.nav-btn{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:10px 0 8px;background:none;border:none;
+  font-size:10px;font-family:'DM Mono',monospace;
+  color:var(--muted);letter-spacing:.04em;
+  transition:color .2s;
+}
+.nav-btn.active{color:var(--gold);}
+.nav-btn svg{width:20px;height:20px;stroke-width:1.5;}
+
+/* PAGES */
+.page{display:none;padding:0 0 80px 0;}
+.page.active{display:block;}
+
+/* HEADER */
+.app-header{
+  padding:clamp(20px,5vw,32px) 20px 16px;
+  text-align:center;
+  background:linear-gradient(180deg,rgba(212,175,55,.06) 0%,transparent 100%);
+  border-bottom:1px solid var(--border);
+}
+.app-logo{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:'DM Mono',monospace;font-size:10px;
+  text-transform:uppercase;letter-spacing:.14em;
+  color:var(--gold);margin-bottom:12px;
+}
+.app-logo-dot{
+  width:6px;height:6px;border-radius:50%;
+  background:var(--gold);animation:pulse 2s infinite;
+}
+.app-title{
+  font-family:'Playfair Display',serif;
+  font-size:clamp(28px,7vw,42px);
+  font-weight:700;line-height:1.05;
+  letter-spacing:-.01em;
+  background:linear-gradient(135deg,var(--gold2) 0%,var(--gold) 50%,var(--gold3) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.app-sub{
+  margin-top:6px;font-size:13px;color:var(--muted);
+  font-family:'DM Mono',monospace;
+}
+
+/* INPUT CARD */
+.input-card{
+  margin:16px;
+  background:var(--surface);
+  border:1px solid var(--border2);
+  border-radius:18px;overflow:hidden;
+}
+.input-row{
+  display:flex;align-items:center;
+  padding:4px 4px 4px 16px;
+  gap:8px;
+}
+.input-row input{
+  flex:1;background:none;border:none;outline:none;
+  color:var(--text);font-family:'DM Mono',monospace;
+  font-size:13px;padding:14px 0;
+  caret-color:var(--gold);min-width:0;
+}
+.input-row input::placeholder{color:var(--muted);}
+.btn-analyze{
+  padding:12px 18px;
+  background:linear-gradient(135deg,var(--gold2),var(--gold));
+  color:#0a0800;border:none;border-radius:12px;
+  font-size:13px;font-weight:700;
+  font-family:'Inter',sans-serif;
+  white-space:nowrap;flex-shrink:0;
+  transition:opacity .2s,transform .1s;
+  letter-spacing:.02em;
+}
+.btn-analyze:active{transform:scale(.97);}
+.btn-analyze:disabled{opacity:.45;}
+
+/* ERROR */
+.error-box{
+  display:none;margin:0 16px 12px;
+  padding:12px 16px;
+  background:rgba(224,80,80,.08);
+  border:1px solid rgba(224,80,80,.2);
+  border-radius:10px;color:#f08080;
+  font-size:12px;font-family:'DM Mono',monospace;
+  line-height:1.5;
+}
+
+/* LOADING */
+#loading-section{
+  display:none;flex-direction:column;align-items:center;
+  gap:16px;padding:48px 20px;text-align:center;
+}
+.vinyl-disc{
+  width:64px;height:64px;border-radius:50%;
+  background:radial-gradient(circle,#1a1500,#0a0800);
+  border:2px solid var(--border2);
+  display:flex;align-items:center;justify-content:center;
+  position:relative;animation:vinyl 2.5s linear infinite;
+}
+.vinyl-disc::before{
+  content:'';position:absolute;inset:4px;border-radius:50%;
+  background:repeating-conic-gradient(rgba(212,175,55,.04) 0deg,transparent 1deg,transparent 4deg);
+}
+.vinyl-center{
+  width:12px;height:12px;border-radius:50%;
+  background:var(--gold);position:relative;z-index:1;
+}
+.step-label{
+  font-family:'Playfair Display',serif;font-style:italic;
+  font-size:18px;color:var(--text2);
+}
+.steps-list{display:flex;flex-direction:column;gap:8px;align-items:flex-start;min-width:240px;}
+.step-row{
+  display:flex;align-items:center;gap:10px;
+  font-family:'DM Mono',monospace;font-size:11px;
+}
+.step-spinner{
+  width:12px;height:12px;
+  border:2px solid rgba(212,175,55,.2);
+  border-top-color:var(--gold);
+  border-radius:50%;animation:spin .7s linear infinite;
+  flex-shrink:0;
+}
+.step-check{width:16px;text-align:center;flex-shrink:0;}
+
+/* RESULT */
+#result-section{display:none;margin:0 0 8px;}
+
+/* THUMB HERO */
+.thumb-hero{
+  position:relative;width:100%;aspect-ratio:16/9;
+  background:var(--surface2);overflow:hidden;
+}
+.thumb-hero img{width:100%;height:100%;object-fit:cover;display:block;}
+.thumb-overlay{
+  position:absolute;inset:0;
+  background:linear-gradient(to top,rgba(10,8,0,.95) 0%,rgba(10,8,0,.4) 50%,transparent 100%);
+}
+.thumb-info{
+  position:absolute;bottom:0;left:0;right:0;
+  padding:16px;
+}
+.thumb-genre{
+  font-family:'DM Mono',monospace;font-size:9px;
+  text-transform:uppercase;letter-spacing:.14em;
+  color:var(--gold);margin-bottom:4px;
+}
+.thumb-title{
+  font-family:'Playfair Display',serif;
+  font-size:clamp(17px,4.5vw,24px);
+  font-weight:700;line-height:1.15;
+  color:var(--text);margin-bottom:3px;
+}
+.thumb-artist{font-size:13px;color:var(--text2);}
+.thumb-mood{
+  display:inline-flex;align-items:center;gap:5px;
+  margin-top:8px;padding:4px 10px;
+  background:rgba(155,111,212,.15);
+  border:1px solid rgba(155,111,212,.25);
+  border-radius:100px;font-size:10px;
+  color:#c4a0f0;font-family:'DM Mono',monospace;
+}
+.yt-btn{
+  position:absolute;top:12px;right:12px;
+  display:flex;align-items:center;gap:6px;
+  padding:7px 12px;
+  background:rgba(10,8,0,.7);
+  border:1px solid rgba(224,80,80,.3);
+  border-radius:8px;color:#ff8080;
+  text-decoration:none;font-size:11px;
+  font-family:'DM Mono',monospace;
+  backdrop-filter:blur(8px);
+}
+
+/* WAVEFORM */
+.waveform{
+  display:flex;align-items:center;justify-content:center;
+  gap:3px;height:28px;padding:0 20px;
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+}
+.wave-bar{
+  width:2.5px;border-radius:2px;
+  background:var(--gold);
+}
+
+/* TABS */
+.tabs{
+  display:flex;
+  background:var(--surface2);
+  border-bottom:1px solid var(--border);
+  overflow-x:auto;scrollbar-width:none;
+}
+.tabs::-webkit-scrollbar{display:none;}
+.tab-btn{
+  flex-shrink:0;padding:11px 14px;background:none;border:none;
+  border-bottom:2px solid transparent;
+  color:var(--muted);font-family:'DM Mono',monospace;
+  font-size:10px;letter-spacing:.06em;text-transform:uppercase;
+  transition:all .2s;white-space:nowrap;
+}
+.tab-btn.active{border-bottom-color:var(--gold);color:var(--gold);}
+
+/* TAB BODY */
+.tab-body{padding:16px;}
+.tab-pane{display:none;}
+.tab-pane.active{display:block;}
+
+/* STAT GRID */
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
+.stat-card{
+  background:var(--surface2);border:1px solid var(--border2);
+  border-radius:12px;padding:12px 10px;
+}
+.stat-label{
+  font-family:'DM Mono',monospace;font-size:9px;
+  text-transform:uppercase;letter-spacing:.1em;
+  color:var(--muted);margin-bottom:6px;
+}
+.stat-value{
+  font-family:'Playfair Display',serif;
+  font-size:clamp(13px,3vw,17px);
+  font-style:italic;line-height:1.2;
+}
+
+/* INSTRUMENTS */
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;}
+.chip{
+  padding:5px 12px;
+  background:var(--gold-dim);
+  border:1px solid var(--border2);
+  border-radius:100px;font-size:11px;
+  color:var(--text2);
+}
+
+/* STYLE DESC */
+.style-block{
+  padding:14px 16px;
+  background:var(--surface2);
+  border-left:3px solid var(--gold);
+  border-radius:0 10px 10px 0;
+  border:1px solid var(--border2);
+  border-left:3px solid var(--gold);
+  font-family:'Playfair Display',serif;
+  font-style:italic;font-size:15px;
+  line-height:1.75;color:var(--text2);
+}
+
+/* CHORDS */
+.chord-section{margin-bottom:16px;}
+.chord-section-title{
+  font-family:'DM Mono',monospace;font-size:9px;
+  text-transform:uppercase;letter-spacing:.12em;
+  color:var(--muted);margin-bottom:10px;
+  display:flex;align-items:center;gap:8px;
+}
+.chord-section-title::after{
+  content:'';flex:1;height:1px;background:var(--border2);
+}
+.chord-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:8px;}
+.chord-card{
+  background:var(--surface2);
+  border:1px solid var(--border2);
+  border-radius:10px;padding:10px 8px;
+  text-align:center;position:relative;
+  transition:border-color .2s;
+}
+.chord-card.tonic{
+  border-color:var(--gold3);
+  background:rgba(212,175,55,.07);
+}
+.chord-name{
+  font-family:'Playfair Display',serif;
+  font-size:18px;font-weight:700;
+  color:var(--text);line-height:1;
+  margin-bottom:3px;
+}
+.chord-card.tonic .chord-name{color:var(--gold);}
+.chord-roman{
+  font-family:'DM Mono',monospace;
+  font-size:9px;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.06em;
+  margin-bottom:4px;
+}
+.chord-type{
+  font-size:9px;color:var(--text2);
+  font-family:'DM Mono',monospace;
+  background:var(--surface3);
+  border-radius:4px;padding:2px 5px;
+  display:inline-block;
+}
+.chord-tonic-badge{
+  position:absolute;top:4px;right:4px;
+  width:5px;height:5px;border-radius:50%;
+  background:var(--gold);
+}
+
+/* PROGRESSION */
+.prog-list{display:flex;flex-direction:column;gap:8px;}
+.prog-item{
+  background:var(--surface2);
+  border:1px solid var(--border2);
+  border-radius:10px;padding:12px 14px;
+}
+.prog-name{
+  font-family:'DM Mono',monospace;font-size:10px;
+  color:var(--gold);letter-spacing:.06em;
+  text-transform:uppercase;margin-bottom:4px;
+}
+.prog-chords{
+  font-family:'Playfair Display',serif;
+  font-size:17px;color:var(--text);
+  margin-bottom:3px;
+}
+.prog-desc{font-size:11px;color:var(--muted);}
+
+/* LYRICS */
+.lyrics-wrap{
+  background:var(--surface2);border:1px solid var(--border2);
+  border-radius:12px;padding:20px 16px;
+  max-height:55vh;overflow-y:auto;
+}
+.lyrics-text{
+  font-family:'Playfair Display',serif;
+  font-size:16px;line-height:1.95;
+  color:rgba(245,237,216,.88);
+  white-space:pre-wrap;
+}
+.lyrics-warn{
+  margin-top:10px;padding:8px 12px;
+  background:rgba(212,175,55,.06);
+  border:1px solid rgba(212,175,55,.15);
+  border-radius:7px;font-size:10px;
+  color:var(--muted);font-family:'DM Mono',monospace;
+}
+
+/* NOT MUSIC */
+.not-music{
+  margin:16px;padding:40px 24px;
+  background:var(--surface);border:1px solid var(--border2);
+  border-radius:18px;text-align:center;
+}
+
+/* SETTINGS PAGE */
+.settings-page{padding:20px 16px 80px;}
+.settings-header{
+  font-family:'Playfair Display',serif;
+  font-size:22px;font-weight:700;
+  color:var(--gold);margin-bottom:20px;
+  display:flex;align-items:center;gap:10px;
+}
+.settings-card{
+  background:var(--surface);border:1px solid var(--border2);
+  border-radius:16px;overflow:hidden;margin-bottom:16px;
+}
+.settings-card-title{
+  padding:14px 16px;
+  border-bottom:1px solid var(--border);
+  font-family:'DM Mono',monospace;font-size:10px;
+  text-transform:uppercase;letter-spacing:.12em;color:var(--gold);
+  display:flex;align-items:center;gap:8px;
+}
+.settings-row{
+  padding:14px 16px;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:12px;
+}
+.settings-row:last-child{border-bottom:none;}
+.settings-row label{
+  font-size:13px;color:var(--text2);flex:1;
+}
+.settings-row small{
+  display:block;font-size:10px;color:var(--muted);
+  font-family:'DM Mono',monospace;margin-top:2px;
+}
+.key-input-wrap{
+  display:flex;gap:8px;align-items:center;
+}
+.key-input{
+  flex:1;background:var(--surface2);
+  border:1px solid var(--border2);border-radius:8px;
+  padding:10px 12px;color:var(--text);
+  font-family:'DM Mono',monospace;font-size:12px;
+  outline:none;caret-color:var(--gold);
+  transition:border-color .2s;
+}
+.key-input:focus{border-color:var(--gold3);}
+.key-input::placeholder{color:var(--muted);}
+.btn-save{
+  padding:10px 16px;
+  background:linear-gradient(135deg,var(--gold2),var(--gold));
+  color:#0a0800;border:none;border-radius:8px;
+  font-size:12px;font-weight:700;
+  font-family:'Inter',sans-serif;
+  white-space:nowrap;
+  transition:opacity .2s;
+}
+.btn-save:active{opacity:.8;}
+.key-status{
+  padding:8px 12px;border-radius:7px;
+  font-family:'DM Mono',monospace;font-size:10px;
+  margin-top:8px;
+}
+.key-status.ok{
+  background:rgba(212,175,55,.08);
+  border:1px solid rgba(212,175,55,.2);
+  color:var(--gold);
+}
+.key-status.missing{
+  background:rgba(224,80,80,.08);
+  border:1px solid rgba(224,80,80,.2);
+  color:#f08080;
+}
+.settings-info{
+  padding:14px 16px;
+  font-size:12px;color:var(--muted);line-height:1.6;
+}
+.settings-link{color:var(--gold);text-decoration:none;}
+
+/* INSTALL BANNER */
+#install-banner{
+  display:none;position:fixed;
+  bottom:calc(70px + var(--safe-bottom));
+  left:12px;right:12px;
+  background:var(--surface2);
+  border:1px solid var(--border2);
+  border-radius:14px;padding:14px 16px;
+  z-index:300;align-items:center;gap:12px;
+  box-shadow:0 8px 32px rgba(0,0,0,.7);
+}
+#install-banner.show{display:flex;animation:fadeUp .3s ease;}
+.install-text{flex:1;}
+.install-text strong{font-size:13px;display:block;margin-bottom:2px;}
+.install-text span{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;}
+.btn-install{
+  padding:9px 16px;
+  background:linear-gradient(135deg,var(--gold2),var(--gold));
+  color:#0a0800;border:none;border-radius:8px;
+  font-size:12px;font-weight:700;white-space:nowrap;
+}
+.btn-dismiss{background:none;border:none;color:var(--muted);font-size:18px;padding:4px;}
+
+/* NO KEY WARNING */
+#no-key-warn{
+  display:none;margin:12px 16px 0;
+  padding:12px 16px;
+  background:rgba(212,175,55,.07);
+  border:1px solid rgba(212,175,55,.2);
+  border-radius:10px;
+  font-size:12px;color:var(--text2);
+  font-family:'DM Mono',monospace;
+  line-height:1.5;
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════
+     PAGE: HOME
+══════════════════════════════════════ -->
+<div id="page-home" class="page active">
+
+  <div class="app-header">
+    <div class="app-logo">
+      <span class="app-logo-dot"></span>
+      AI Music Analyzer
+    </div>
+    <h1 class="app-title">Music Intelligence</h1>
+    <p class="app-sub">YouTube → Análise musical completa com IA</p>
+  </div>
+
+  <div id="no-key-warn">
+    ⚙️ Configure sua chave API em <strong>Configurações</strong> antes de analisar.
+  </div>
+
+  <div class="input-card" style="margin-top:16px;">
+    <div class="input-row">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#e05050" style="width:18px;height:18px;flex-shrink:0;stroke-width:2;">
+        <polygon points="5 3 19 12 5 21 5 3"/>
+      </svg>
+      <input id="url-input" type="url" inputmode="url"
+        placeholder="Cole o link do YouTube aqui..."
+        autocomplete="off" spellcheck="false"/>
+      <button class="btn-analyze" id="analyze-btn">Analisar</button>
+    </div>
+  </div>
+
+  <div class="error-box" id="error-box"></div>
+
+  <!-- LOADING -->
+  <div id="loading-section">
+    <div class="vinyl-disc">
+      <div class="vinyl-center"></div>
+    </div>
+    <p class="step-label" id="step-label">Iniciando análise...</p>
+    <div class="steps-list" id="steps-list"></div>
+  </div>
+
+  <!-- RESULT -->
+  <div id="result-section">
+
+    <!-- not music -->
+    <div id="not-music-card" class="not-music" style="display:none;">
+      <div style="font-size:40px;margin-bottom:12px;">🎬</div>
+      <h3 style="font-family:'Playfair Display',serif;font-size:20px;margin-bottom:8px;color:var(--text);">
+        Não é um vídeo musical
+      </h3>
+      <p id="not-music-reason" style="color:var(--muted);font-size:13px;"></p>
+    </div>
+
+    <!-- music card -->
+    <div id="music-card" style="display:none;">
+
+      <!-- Thumb Hero -->
+      <div class="thumb-hero">
+        <img id="thumb-img" src="" alt=""/>
+        <div class="thumb-overlay"></div>
+        <div class="thumb-info">
+          <div class="thumb-genre" id="result-genre"></div>
+          <div class="thumb-title" id="result-title"></div>
+          <div class="thumb-artist" id="result-artist"></div>
+          <div class="thumb-mood" id="result-mood"></div>
+        </div>
+        <a id="yt-link" class="yt-btn" href="#" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="#e05050" style="width:12px;height:12px;"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          YouTube
+        </a>
+      </div>
+
+      <!-- Waveform -->
+      <div class="waveform" id="waveform"></div>
+
+      <!-- Tabs -->
+      <div class="tabs" id="tabs-bar">
+        <button class="tab-btn active" data-tab="analysis">🎼 Análise</button>
+        <button class="tab-btn" data-tab="chords">🎸 Acordes</button>
+        <button class="tab-btn" data-tab="lyrics">🎤 Letra</button>
+      </div>
+
+      <!-- Tab bodies -->
+      <div class="tab-body">
+
+        <!-- ANALYSIS -->
+        <div class="tab-pane active" id="tab-analysis">
+          <div class="stat-grid">
+            <div class="stat-card">
+              <div class="stat-label">🎵 Tom</div>
+              <div class="stat-value" id="stat-key" style="color:var(--gold);">—</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">🥁 BPM</div>
+              <div class="stat-value" id="stat-tempo" style="color:var(--purple);">—</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">🎸 Gênero</div>
+              <div class="stat-value" id="stat-genre" style="color:var(--text2);">—</div>
+            </div>
+          </div>
+
+          <div id="instruments-section" style="display:none;margin-bottom:16px;">
+            <div style="font-family:'DM Mono',monospace;font-size:9px;text-transform:uppercase;
+              letter-spacing:.12em;color:var(--muted);margin-bottom:8px;">
+              Instrumentos
+            </div>
+            <div class="chips" id="instruments-list"></div>
+          </div>
+
+          <div style="font-family:'DM Mono',monospace;font-size:9px;text-transform:uppercase;
+            letter-spacing:.12em;color:var(--muted);margin-bottom:8px;">
+            Estilo & Descrição
+          </div>
+          <div class="style-block" id="result-style"></div>
+        </div>
+
+        <!-- CHORDS -->
+        <div class="tab-pane" id="tab-chords">
+
+          <div class="chord-section" id="chords-diatonic-section" style="display:none;">
+            <div class="chord-section-title">Acordes Diatônicos</div>
+            <div class="chord-grid" id="chords-diatonic"></div>
+          </div>
+
+          <div class="chord-section" id="chords-used-section" style="display:none;">
+            <div class="chord-section-title">Acordes Usados na Música</div>
+            <div class="chord-grid" id="chords-used"></div>
+          </div>
+
+          <div class="chord-section" id="progressions-section" style="display:none;">
+            <div class="chord-section-title">Progressões Identificadas</div>
+            <div class="prog-list" id="progressions-list"></div>
+          </div>
+
+          <div id="chords-empty" style="text-align:center;padding:32px;color:var(--muted);
+            font-family:'DM Mono',monospace;font-size:12px;display:none;">
+            Acordes não disponíveis para esta música.
+          </div>
+        </div>
+
+        <!-- LYRICS -->
+        <div class="tab-pane" id="tab-lyrics">
+          <div id="lyrics-has-vocals">
+            <div class="lyrics-wrap">
+              <pre class="lyrics-text" id="lyrics-text"></pre>
+            </div>
+            <div class="lyrics-warn">
+              ⚠ Letra obtida/reconstituída por IA. Pode conter imprecisões.
+            </div>
+          </div>
+          <div id="lyrics-no-vocals" style="display:none;text-align:center;padding:32px;color:var(--muted);">
+            <div style="font-size:32px;margin-bottom:10px;">🎹</div>
+            <p style="font-size:13px;">Música instrumental — sem vocais.</p>
+          </div>
+        </div>
+
+      </div><!-- /tab-body -->
+    </div><!-- /music-card -->
+  </div><!-- /result-section -->
+
+</div><!-- /page-home -->
+
+
+<!-- ══════════════════════════════════════
+     PAGE: SETTINGS
+══════════════════════════════════════ -->
+<div id="page-settings" class="page">
+  <div class="settings-page">
+
+    <div class="settings-header">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style="width:22px;height:22px;stroke-width:1.5;">
+        <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+      Configurações
+    </div>
+
+    <!-- API Key Card -->
+    <div class="settings-card">
+      <div class="settings-card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style="width:14px;height:14px;stroke-width:2;">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+        Chave API Anthropic
+      </div>
+      <div class="settings-row">
+        <div style="flex:1;">
+          <label>
+            Sua chave de API
+            <small>Começa com sk-ant-... • Salva localmente</small>
+          </label>
+          <div class="key-input-wrap" style="margin-top:10px;">
+            <input class="key-input" id="key-input" type="password"
+              placeholder="sk-ant-api03-..." autocomplete="off" spellcheck="false"/>
+            <button class="btn-save" id="key-save-btn">Salvar</button>
+          </div>
+          <div id="key-status" class="key-status missing" style="margin-top:10px;">
+            ⚠ Nenhuma chave configurada
+          </div>
+        </div>
+      </div>
+      <div class="settings-info">
+        🔒 A chave é salva apenas no seu dispositivo (localStorage) e nunca enviada a terceiros.<br/><br/>
+        Obtenha sua chave em:
+        <a class="settings-link" href="https://console.anthropic.com/settings/keys" target="_blank">
+          console.anthropic.com →
+        </a>
+      </div>
+    </div>
+
+    <!-- About Card -->
+    <div class="settings-card">
+      <div class="settings-card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style="width:14px;height:14px;stroke-width:2;">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        Sobre o App
+      </div>
+      <div class="settings-info">
+        <strong style="color:var(--text);">AI Music Analyzer</strong> · v2.0<br/><br/>
+        Analisa músicas do YouTube usando IA para identificar:<br/>
+        Tom · BPM · Gênero · Acordes completos · Progressões · Letra<br/><br/>
+        Powered by <span style="color:var(--gold);">Claude AI (Anthropic)</span>
+      </div>
+    </div>
+
+  </div>
+</div><!-- /page-settings -->
+
+
+<!-- BOTTOM NAV -->
+<nav id="bottom-nav">
+  <button class="nav-btn active" data-page="page-home" id="nav-home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+    </svg>
+    Início
+  </button>
+  <button class="nav-btn" data-page="page-settings" id="nav-settings">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+      <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+    </svg>
+    Config
+  </button>
+</nav>
+
+<!-- INSTALL BANNER -->
+<div id="install-banner">
+  <div style="font-size:24px;">📲</div>
+  <div class="install-text">
+    <strong>Instalar como App</strong>
+    <span>Adicione à tela inicial</span>
+  </div>
+  <button class="btn-install" id="install-btn">Instalar</button>
+  <button class="btn-dismiss" id="dismiss-banner">✕</button>
+</div>
+
+<script>
+// ══════════════════════════════════════
+//  SYSTEM PROMPT
+// ══════════════════════════════════════
+const SYSTEM_PROMPT = `Você é um especialista em teoria musical, análise harmônica e transcrição. Receberá título e canal de um vídeo do YouTube.
+
+Use web_search para pesquisar. Faça QUATRO buscas:
+1. "{titulo} {artista} key BPM music theory chords"
+2. "{titulo} {artista} chord progression analysis"
+3. "{titulo} {artista} lyrics letra completa"
+4. "{titulo} {artista} genre instruments"
+
+Retorne EXCLUSIVAMENTE JSON válido sem texto extra, sem markdown:
+
+{
+  "isMusicVideo": true,
+  "title": "título exato",
+  "artist": "artista exato",
+  "genre": "gênero",
+  "style": "descrição detalhada do estilo",
+  "key": "tom (ex: Lá menor)",
+  "tempo": "BPM e classificação",
+  "mood": "atmosfera emocional",
+  "instruments": ["instrumento1","instrumento2"],
+  "hasVocals": true,
+  "lyrics": "letra completa com estrofes separadas por \\n\\n",
+  "chords": {
+    "diatonic": [
+      {"name":"Am","roman":"i","type":"menor","isTonic":true},
+      {"name":"Bdim","roman":"ii°","type":"diminuto","isTonic":false},
+      {"name":"C","roman":"III","type":"maior","isTonic":false},
+      {"name":"Dm","roman":"iv","type":"menor","isTonic":false},
+      {"name":"Em","roman":"v","type":"menor","isTonic":false},
+      {"name":"F","roman":"VI","type":"maior","isTonic":false},
+      {"name":"G","roman":"VII","type":"maior","isTonic":false}
+    ],
+    "used": [
+      {"name":"Am","roman":"i","type":"menor","isTonic":true},
+      {"name":"F","roman":"VI","type":"maior","isTonic":false},
+      {"name":"C","roman":"III","type":"maior","isTonic":false},
+      {"name":"G","roman":"VII","type":"maior","isTonic":false}
+    ],
+    "progressions": [
+      {"name":"Verso","chords":"Am — F — C — G","description":"Progressão principal"},
+      {"name":"Refrão","chords":"F — C — G — Am","description":"Variação do refrão"}
+    ]
+  },
+  "notMusicReason": ""
+}
+
+Se não for música: {"isMusicVideo":false,"notMusicReason":"motivo"}
+
+IMPORTANTE: Os acordes devem ser REAIS e baseados na análise da música específica, não genéricos.`;
+
+// ══════════════════════════════════════
+//  STEPS
+// ══════════════════════════════════════
+const ALL_STEPS = [
+  {id:'step-fetch',  icon:'📡', label:'Buscando metadados do YouTube'},
+  {id:'step-search', icon:'🔍', label:'Pesquisando informações da música'},
+  {id:'step-chords', icon:'🎸', label:'Analisando acordes e harmonia'},
+  {id:'step-lyrics', icon:'🎤', label:'Obtendo letra da música'},
+];
+
+// ══════════════════════════════════════
+//  DOM
+// ══════════════════════════════════════
+const $  = id => document.getElementById(id);
+const urlInput       = $('url-input');
+const analyzeBtn     = $('analyze-btn');
+const errorBox       = $('error-box');
+const loadingSection = $('loading-section');
+const stepLabelEl    = $('step-label');
+const stepsListEl    = $('steps-list');
+const resultSection  = $('result-section');
+const notMusicCard   = $('not-music-card');
+const notMusicReason = $('not-music-reason');
+const musicCard      = $('music-card');
+const thumbImg       = $('thumb-img');
+const resultGenre    = $('result-genre');
+const resultTitle    = $('result-title');
+const resultArtist   = $('result-artist');
+const resultMood     = $('result-mood');
+const waveformEl     = $('waveform');
+const ytLink         = $('yt-link');
+const statKey        = $('stat-key');
+const statTempo      = $('stat-tempo');
+const statGenre      = $('stat-genre');
+const instrumentsSec = $('instruments-section');
+const instrumentsList= $('instruments-list');
+const resultStyle    = $('result-style');
+const lyricsHasVocals= $('lyrics-has-vocals');
+const lyricsNoVocals = $('lyrics-no-vocals');
+const lyricsText     = $('lyrics-text');
+const keyInput       = $('key-input');
+const keySaveBtn     = $('key-save-btn');
+const keyStatus      = $('key-status');
+const noKeyWarn      = $('no-key-warn');
+const installBanner  = $('install-banner');
+const installBtn     = $('install-btn');
+const dismissBanner  = $('dismiss-banner');
+
+// ══════════════════════════════════════
+//  SERVICE WORKER
+// ══════════════════════════════════════
+if ('serviceWorker' in navigator)
+  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+
+// ══════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════
+document.querySelectorAll('.nav-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const pageId = btn.dataset.page;
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    $(pageId).classList.add('active');
+    btn.classList.add('active');
+    window.scrollTo(0,0);
+  });
+});
+
+// ══════════════════════════════════════
+//  API KEY MANAGEMENT
+// ══════════════════════════════════════
+function getKey() { return localStorage.getItem('anthropic_api_key') || ''; }
+function updateKeyUI() {
+  const k = getKey();
+  if (k) {
+    keyStatus.className = 'key-status ok';
+    keyStatus.textContent = '✓ Chave configurada (' + k.slice(0,12) + '••••)';
+    noKeyWarn.style.display = 'none';
+  } else {
+    keyStatus.className = 'key-status missing';
+    keyStatus.textContent = '⚠ Nenhuma chave configurada';
+    noKeyWarn.style.display = 'block';
+  }
+}
+updateKeyUI();
+keyInput.placeholder = getKey() ? getKey().slice(0,12)+'••••' : 'sk-ant-api03-...';
+
+keySaveBtn.addEventListener('click', () => {
+  const k = keyInput.value.trim();
+  if (!k) { keyStatus.className='key-status missing'; keyStatus.textContent='⚠ Insira uma chave.'; return; }
+  if (!k.startsWith('sk-')) { keyStatus.className='key-status missing'; keyStatus.textContent='⚠ Chave inválida. Deve começar com sk-...'; return; }
+  localStorage.setItem('anthropic_api_key', k);
+  keyInput.value = '';
+  keyInput.placeholder = k.slice(0,12)+'••••';
+  updateKeyUI();
+});
+keyInput.addEventListener('keydown', e => { if(e.key==='Enter') keySaveBtn.click(); });
+
+// ══════════════════════════════════════
+//  PWA INSTALL
+// ══════════════════════════════════════
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault(); deferredPrompt = e;
+  if (!localStorage.getItem('pwa_dismissed')) installBanner.classList.add('show');
+});
+installBtn.addEventListener('click', async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  await deferredPrompt.userChoice;
+  deferredPrompt = null;
+  installBanner.classList.remove('show');
+});
+dismissBanner.addEventListener('click', () => {
+  installBanner.classList.remove('show');
+  localStorage.setItem('pwa_dismissed','1');
+});
+
+// ══════════════════════════════════════
+//  TABS
+// ══════════════════════════════════════
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const tab = btn.dataset.tab;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    $('tab-' + tab).classList.add('active');
+  });
+});
+
+// ══════════════════════════════════════
+//  INPUT
+// ══════════════════════════════════════
+urlInput.addEventListener('keydown', e => { if(e.key==='Enter') handleAnalyze(); });
+analyzeBtn.addEventListener('click', handleAnalyze);
+
+// ══════════════════════════════════════
+//  WAVEFORM
+// ══════════════════════════════════════
+function buildWaveform() {
+  waveformEl.innerHTML = '';
+  for (let i = 0; i < 28; i++) {
+    const bar = document.createElement('div');
+    bar.className = 'wave-bar';
+    bar.style.cssText = `height:6px;animation:wave 1.1s ease-in-out infinite;animation-delay:${(i*0.06).toFixed(2)}s;`;
+    waveformEl.appendChild(bar);
+  }
+}
+
+// ══════════════════════════════════════
+//  LOADING STEPS
+// ══════════════════════════════════════
+function updateSteps(currentId) {
+  const idx = ALL_STEPS.findIndex(s => s.id === currentId);
+  stepLabelEl.textContent = ALL_STEPS[idx]?.label || 'Analisando...';
+  stepsListEl.innerHTML = '';
+  ALL_STEPS.forEach((s, i) => {
+    if (i > idx) return;
+    const done = i < idx, active = i === idx;
+    const row = document.createElement('div');
+    row.className = 'step-row';
+    row.style.color = done ? 'var(--gold)' : active ? 'var(--text)' : 'var(--muted)';
+    if (active) {
+      const sp = document.createElement('div');
+      sp.className = 'step-spinner';
+      row.appendChild(sp);
+    } else {
+      const ic = document.createElement('span');
+      ic.className = 'step-check';
+      ic.textContent = done ? '✓' : s.icon;
+      row.appendChild(ic);
+    }
+    const txt = document.createElement('span');
+    txt.textContent = s.label;
+    row.appendChild(txt);
+    stepsListEl.appendChild(row);
+  });
+}
+
+// ══════════════════════════════════════
+//  YOUTUBE HELPERS
+// ══════════════════════════════════════
+function extractVideoId(url) {
+  const patterns = [
+    /(?:youtube\.com\/watch\?(?:[^#&]*&)?v=)([a-zA-Z0-9_-]{11})/,
+    /(?:youtu\.be\/)([a-zA-Z0-9_-]{11})/,
+    /(?:youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
+    /(?:youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
+  ];
+  for (const p of patterns) { const m = url.match(p); if (m) return m[1]; }
+  return null;
+}
+
+async function fetchYTMeta(videoId) {
+  const ytUrl = `https://www.youtube.com/watch?v=${videoId}`;
+  const fallback = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+  for (const api of [
+    `https://noembed.com/embed?url=${encodeURIComponent(ytUrl)}`,
+    `https://www.youtube.com/oembed?url=${encodeURIComponent(ytUrl)}&format=json`,
+  ]) {
+    try {
+      const r = await fetch(api);
+      if (r.ok) {
+        const d = await r.json();
+        if (d && d.title && !d.error)
+          return { title:d.title||'', channel:d.author_name||'', thumbnailUrl:d.thumbnail_url||fallback };
+      }
+    } catch(_) {}
+  }
+  return { title:'', channel:'', thumbnailUrl:fallback };
+}
+
+function setThumb(videoId, initial) {
+  const urls = [...new Set([
+    initial,
+    `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
+    `https://img.youtube.com/vi/${videoId}/sddefault.jpg`,
+    `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+    `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`,
+  ])];
+  let i = 0;
+  thumbImg.style.display = 'block';
+  thumbImg.src = urls[0];
+  thumbImg.onerror = () => {
+    i++;
+    if (i < urls.length) thumbImg.src = urls[i];
+    else { thumbImg.style.display='none'; }
+  };
+}
+
+// ══════════════════════════════════════
+//  API CALL
+// ══════════════════════════════════════
+function extractJSON(content) {
+  const text = content.filter(b=>b.type==='text').map(b=>b.text).join('');
+  if (!text.trim()) return null;
+  const clean = text.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
+  try { return JSON.parse(clean); } catch(_) {}
+  const s = clean.indexOf('{'), e = clean.lastIndexOf('}');
+  if (s!==-1 && e>s) { try { return JSON.parse(clean.slice(s,e+1)); } catch(_) {} }
+  return null;
+}
+
+async function callAPI(msg) {
+  const apiKey = getKey();
+  if (!apiKey) throw new Error('Configure sua chave API em Configurações antes de analisar.');
+
+  const res = await fetch('/api/analyze', {
+    method:'POST',
+    headers:{ 'Content-Type':'application/json', 'x-api-key': apiKey },
+    body: JSON.stringify({
+      model:'claude-sonnet-4-20250514',
+      max_tokens:5000,
+      system: SYSTEM_PROMPT,
+      tools:[{type:'web_search_20250305',name:'web_search'}],
+      messages:[{role:'user',content:msg}],
+    }),
+  });
+
+  if (!res.ok) {
+    let errMsg = `Erro no servidor (${res.status}).`;
+    try { const ej = await res.json(); if (ej.error) errMsg = ej.error; } catch(_) {}
+    throw new Error(errMsg);
+  }
+
+  const data = await res.json();
+  if (data.error) throw new Error(typeof data.error==='object' ? (data.error.message||JSON.stringify(data.error)) : String(data.error));
+  if (!data.content || !Array.isArray(data.content)) throw new Error('Resposta inesperada da API.');
+
+  const parsed = extractJSON(data.content);
+  if (!parsed) throw new Error('Não foi possível interpretar a resposta da IA. Tente novamente.');
+  return parsed;
+}
+
+// ══════════════════════════════════════
+//  RENDER CHORDS
+// ══════════════════════════════════════
+function renderChords(chords) {
+  const diatonicSec  = $('chords-diatonic-section');
+  const diatonicGrid = $('chords-diatonic');
+  const usedSec      = $('chords-used-section');
+  const usedGrid     = $('chords-used');
+  const progSec      = $('progressions-section');
+  const progList     = $('progressions-list');
+  const emptyMsg     = $('chords-empty');
+
+  [diatonicSec,usedSec,progSec].forEach(el => el.style.display='none');
+  emptyMsg.style.display = 'none';
+  diatonicGrid.innerHTML = '';
+  usedGrid.innerHTML = '';
+  progList.innerHTML = '';
+
+  if (!chords) { emptyMsg.style.display='block'; return; }
+
+  function makeChordCard(c) {
+    const card = document.createElement('div');
+    card.className = 'chord-card' + (c.isTonic ? ' tonic' : '');
+    card.innerHTML = `
+      ${c.isTonic ? '<div class="chord-tonic-badge"></div>' : ''}
+      <div class="chord-name">${c.name}</div>
+      <div class="chord-roman">${c.roman||''}</div>
+      <div class="chord-type">${c.type||''}</div>
+    `;
+    return card;
+  }
+
+  if (chords.diatonic && chords.diatonic.length) {
+    diatonicSec.style.display = 'block';
+    chords.diatonic.forEach(c => diatonicGrid.appendChild(makeChordCard(c)));
+  }
+
+  if (chords.used && chords.used.length) {
+    usedSec.style.display = 'block';
+    chords.used.forEach(c => usedGrid.appendChild(makeChordCard(c)));
+  }
+
+  if (chords.progressions && chords.progressions.length) {
+    progSec.style.display = 'block';
+    chords.progressions.forEach(p => {
+      const item = document.createElement('div');
+      item.className = 'prog-item';
+      item.innerHTML = `
+        <div class="prog-name">${p.name||'Progressão'}</div>
+        <div class="prog-chords">${p.chords||''}</div>
+        <div class="prog-desc">${p.description||''}</div>
+      `;
+      progList.appendChild(item);
+    });
+  }
+
+  if (!chords.diatonic?.length && !chords.used?.length && !chords.progressions?.length) {
+    emptyMsg.style.display = 'block';
+  }
+}
+
+// ══════════════════════════════════════
+//  RENDER RESULT
+// ══════════════════════════════════════
+function renderResult(data) {
+  resultSection.style.display = 'block';
+  resultSection.classList.add('fade-up');
+
+  if (!data.isMusicVideo) {
+    notMusicCard.style.display = 'block';
+    musicCard.style.display = 'none';
+    notMusicReason.textContent = data.notMusicReason || 'Este vídeo não parece ser uma música.';
+    return;
+  }
+
+  notMusicCard.style.display = 'none';
+  musicCard.style.display = 'block';
+
+  setThumb(data.videoId, data.thumbnailUrl);
+  thumbImg.alt = data.title || '';
+
+  resultGenre.textContent  = data.genre  || '';
+  resultTitle.textContent  = data.title  || '—';
+  resultArtist.textContent = data.artist || '';
+  resultMood.textContent   = '✦ ' + (data.mood || '');
+  ytLink.href = `https://www.youtube.com/watch?v=${data.videoId}`;
+
+  statKey.textContent   = data.key   || '—';
+  statTempo.textContent = data.tempo || '—';
+  statGenre.textContent = data.genre || '—';
+  resultStyle.textContent = data.style || '';
+
+  if (data.instruments?.length) {
+    instrumentsSec.style.display = 'block';
+    instrumentsList.innerHTML = data.instruments.map(i =>
+      `<span class="chip">${i}</span>`).join('');
+  } else {
+    instrumentsSec.style.display = 'none';
+  }
+
+  renderChords(data.chords);
+  buildWaveform();
+
+  if (data.hasVocals) {
+    lyricsHasVocals.style.display = 'block';
+    lyricsNoVocals.style.display  = 'none';
+    lyricsText.textContent = data.lyrics?.trim() || 'Letra não encontrada.';
+  } else {
+    lyricsHasVocals.style.display = 'none';
+    lyricsNoVocals.style.display  = 'block';
+  }
+
+  // reset to analysis tab
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelector('[data-tab="analysis"]').classList.add('active');
+  $('tab-analysis').classList.add('active');
+
+  setTimeout(() => resultSection.scrollIntoView({behavior:'smooth',block:'start'}), 100);
+}
+
+// ══════════════════════════════════════
+//  MAIN ANALYZE
+// ══════════════════════════════════════
+async function handleAnalyze() {
+  const urlVal = urlInput.value.trim();
+  errorBox.style.display = 'none';
+  resultSection.style.display = 'none';
+  resultSection.classList.remove('fade-up');
+
+  if (!getKey()) {
+    errorBox.textContent = '⚠ Configure sua chave API em Configurações primeiro.';
+    errorBox.style.display = 'block';
+    return;
+  }
+  if (!urlVal) {
+    errorBox.textContent = '⚠ Cole um link do YouTube antes de analisar.';
+    errorBox.style.display = 'block';
+    return;
+  }
+  const videoId = extractVideoId(urlVal);
+  if (!videoId) {
+    errorBox.textContent = '⚠ Link inválido. Formatos: youtube.com/watch?v=… ou youtu.be/…';
+    errorBox.style.display = 'block';
+    return;
+  }
+
+  analyzeBtn.disabled = true;
+  analyzeBtn.textContent = '...';
+  loadingSection.style.display = 'flex';
+  updateSteps('step-fetch');
+
+  try {
+    const meta = await fetchYTMeta(videoId);
+    updateSteps('step-search');
+
+    const msg = meta.title
+      ? `Analise esta música:\n\nTÍTULO: "${meta.title}"\nARTISTA/CANAL: "${meta.channel}"\nURL: https://www.youtube.com/watch?v=${videoId}\n\nPesquise acordes reais, progressões, tom, BPM, letra. Retorne SOMENTE o JSON.`
+      : `Analise esta música do YouTube:\nURL: https://www.youtube.com/watch?v=${videoId}\n\nRetorne SOMENTE o JSON.`;
+
+    updateSteps('step-chords');
+    const parsed = await callAPI(msg);
+    updateSteps('step-lyrics');
+    await new Promise(r => setTimeout(r, 500));
+
+    loadingSection.style.display = 'none';
+    analyzeBtn.disabled = false;
+    analyzeBtn.textContent = 'Analisar';
+
+    renderResult({...parsed, videoId, thumbnailUrl: meta.thumbnailUrl});
+
+  } catch(err) {
+    loadingSection.style.display = 'none';
+    analyzeBtn.disabled = false;
+    analyzeBtn.textContent = 'Analisar';
+    errorBox.textContent = '⚠ ' + (err.message || 'Erro inesperado. Tente novamente.');
+    errorBox.style.display = 'block';
+  }
+}
+</script>
+</body>
+</html>
